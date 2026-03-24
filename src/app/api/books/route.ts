@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
   const sortCol = validSorts.includes(sort) ? sort : 'date_read';
   const sortOrder = order === 'ASC' ? 'ASC' : 'DESC';
 
-  query += ` ORDER BY ${sortCol} ${sortOrder} NULLS LAST LIMIT ? OFFSET ?`;
+  // SQLite doesn't support NULLS LAST — use CASE expression to push nulls to bottom
+  query += ` ORDER BY CASE WHEN ${sortCol} IS NULL THEN 1 ELSE 0 END, ${sortCol} ${sortOrder} LIMIT ? OFFSET ?`;
   params.push(limit, offset);
 
   const books = db.prepare(query).all(...params);

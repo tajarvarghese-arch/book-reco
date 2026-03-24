@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import BookCover from '@/components/BookCover';
+import ThemeToggle from '@/components/ThemeToggle';
 
 type Book = {
   id: number;
@@ -64,17 +65,81 @@ function Stars({ rating, onRate }: { rating: number; onRate?: (r: number) => voi
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="brand-card p-5">
-      <p className="text-xs text-[#b0aea5] uppercase tracking-wider" style={{fontFamily: 'var(--font-heading)'}}>
+    <div className="brand-card stat-glow p-5">
+      <p className="text-xs uppercase tracking-wider" style={{fontFamily: 'var(--font-heading)', color: 'var(--text-muted)'}}>
         {label}
       </p>
-      <p className="text-3xl font-bold text-[#d97757] mt-1" style={{fontFamily: 'var(--font-heading)'}}>{value}</p>
-      {sub && <p className="text-sm text-[#b0aea5] mt-1">{sub}</p>}
+      <p className="text-3xl font-bold mt-1" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>{value}</p>
+      {sub && <p className="text-sm mt-1" style={{color: 'var(--text-secondary)'}}>{sub}</p>}
     </div>
   );
 }
 
-function BarChart({ data, labelKey, valueKey, color = 'bg-[#d97757]', maxBars }: {
+function ReadingGoals({ stats }: { stats: Stats }) {
+  const goal = 24; // yearly goal
+  const currentYear = new Date().getFullYear().toString();
+  const booksThisYear = stats.booksPerYear.find(b => b.year === currentYear)?.count || 0;
+  const progress = Math.min(booksThisYear / goal, 1);
+  const monthsElapsed = new Date().getMonth() + 1;
+  const expectedPace = Math.round((goal / 12) * monthsElapsed);
+  const ahead = booksThisYear - expectedPace;
+  const circumference = 2 * Math.PI * 45;
+
+  return (
+    <div className="brand-card p-6">
+      <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>
+        {currentYear} Reading Goal
+      </h2>
+      <div className="flex items-center gap-6">
+        {/* Progress Ring */}
+        <div className="relative shrink-0">
+          <svg width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="45" fill="none" stroke="var(--border)" strokeWidth="8" />
+            <circle
+              cx="55" cy="55" r="45" fill="none"
+              stroke="var(--accent)" strokeWidth="8" strokeLinecap="round"
+              className="progress-ring-circle"
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference - (progress * circumference)}
+            />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-2xl font-bold" style={{fontFamily: 'var(--font-heading)', color: 'var(--text-primary)'}}>{booksThisYear}</span>
+            <span className="text-[10px]" style={{color: 'var(--text-muted)'}}>of {goal}</span>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="flex-1 space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-xs" style={{color: 'var(--text-secondary)'}}>Progress</span>
+            <span className="text-sm font-bold" style={{color: 'var(--text-primary)'}}>{Math.round(progress * 100)}%</span>
+          </div>
+          <div className="h-2 rounded-full overflow-hidden" style={{background: 'var(--border)'}}>
+            <div className="h-full rounded-full bar-animated" style={{width: `${progress * 100}%`, background: 'var(--accent)'}} />
+          </div>
+          <p className="text-xs" style={{color: ahead >= 0 ? '#6b8f5e' : '#e07a5f'}}>
+            {ahead >= 0 ? `${ahead} books ahead of pace` : `${Math.abs(ahead)} books behind pace`}
+          </p>
+          {stats.readingStreak && (
+            <div className="flex gap-4 mt-2 pt-2" style={{borderTop: '1px solid var(--border)'}}>
+              <div>
+                <span className="text-lg font-bold" style={{color: 'var(--accent)'}}>{stats.readingStreak.current}</span>
+                <span className="text-[10px] ml-1" style={{color: 'var(--text-muted)'}}>mo streak</span>
+              </div>
+              <div>
+                <span className="text-lg font-bold" style={{color: 'var(--text-primary)'}}>{stats.readingStreak.longest}</span>
+                <span className="text-[10px] ml-1" style={{color: 'var(--text-muted)'}}>best</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BarChart({ data, labelKey, valueKey, color = 'var(--accent)', maxBars }: {
   data: Record<string, unknown>[];
   labelKey: string;
   valueKey: string;
@@ -87,11 +152,14 @@ function BarChart({ data, labelKey, valueKey, color = 'bg-[#d97757]', maxBars }:
     <div className="space-y-2">
       {items.map((d, i) => (
         <div key={i} className="flex items-center gap-3">
-          <span className="text-xs text-[#b0aea5] w-20 text-right shrink-0">{String(d[labelKey])}</span>
-          <div className="flex-1 bg-[#e8e6dc] rounded-full h-4 overflow-hidden">
-            <div className={`${color} h-full rounded-full transition-all duration-500`} style={{ width: `${((d[valueKey] as number) / maxVal) * 100}%` }} />
+          <span className="text-xs w-20 text-right shrink-0" style={{color: 'var(--text-secondary)'}}>{String(d[labelKey])}</span>
+          <div className="flex-1 rounded-full h-4 overflow-hidden" style={{background: 'var(--border)'}}>
+            <div
+              className="h-full rounded-full bar-animated"
+              style={{ width: `${((d[valueKey] as number) / maxVal) * 100}%`, background: color, animationDelay: `${i * 50}ms` }}
+            />
           </div>
-          <span className="text-xs font-semibold text-[#141413] w-10">{String(d[valueKey])}</span>
+          <span className="text-xs font-semibold w-10" style={{color: 'var(--text-primary)'}}>{String(d[valueKey])}</span>
         </div>
       ))}
     </div>
@@ -214,8 +282,8 @@ export default function Home() {
 
   if (!stats) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#faf9f5]">
-        <div className="text-[#d97757] text-sm brand-fade" style={{fontFamily: 'var(--font-heading)'}}>Loading library...</div>
+      <div className="min-h-screen flex items-center justify-center" style={{background: 'var(--bg-primary)'}}>
+        <div className="text-sm brand-fade" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Loading library...</div>
       </div>
     );
   }
@@ -223,23 +291,24 @@ export default function Home() {
   const totalPages = Math.ceil(total / perPage);
 
   return (
-    <div className="min-h-screen bg-[#faf9f5]">
+    <div className="min-h-screen" style={{background: 'var(--bg-primary)'}}>
       {/* Header */}
-      <header className="bg-white border-b border-[#e8e6dc] sticky top-0 z-10">
+      <header className="sticky top-0 z-10 backdrop-blur-xl" style={{ background: 'color-mix(in srgb, var(--bg-secondary) 85%, transparent)', borderBottom: '1px solid var(--border)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-lg sm:text-2xl font-bold text-[#141413]" style={{fontFamily: 'var(--font-heading)'}}>Book Tracker</h1>
-            <p className="text-xs sm:text-sm text-[#b0aea5]">{stats.summary.totalBooks} books read</p>
+            <h1 className="text-lg sm:text-2xl font-bold gradient-text" style={{fontFamily: 'var(--font-heading)'}}>Book Tracker</h1>
+            <p className="text-xs sm:text-sm" style={{color: 'var(--text-secondary)'}}>{stats.summary.totalBooks} books read</p>
           </div>
-          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto">
-            <a href="/mindmap" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#6a9bcc] text-white text-xs sm:text-sm whitespace-nowrap">Map</a>
-            <a href="/recommendations" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#788c5d] text-white text-xs sm:text-sm whitespace-nowrap">Recs</a>
-            <a href="/screen" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 bg-white border border-[#e8e6dc] text-[#141413] text-xs sm:text-sm whitespace-nowrap">Edit</a>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <a href="/mindmap" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#5b8fb9] text-white text-xs sm:text-sm whitespace-nowrap">Map</a>
+            <a href="/recommendations" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#6b8f5e] text-white text-xs sm:text-sm whitespace-nowrap">Recs</a>
+            <a href="/screen" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm whitespace-nowrap" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>Edit</a>
+            <ThemeToggle />
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-2 sm:pb-3 flex gap-2">
-          <button onClick={() => setTab('dashboard')} className={`brand-btn px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm ${tab === 'dashboard' ? 'bg-[#d97757] text-white' : 'bg-[#faf9f5] text-[#b0aea5] border border-[#e8e6dc]'}`}>Dashboard</button>
-          <button onClick={() => setTab('books')} className={`brand-btn px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm ${tab === 'books' ? 'bg-[#d97757] text-white' : 'bg-[#faf9f5] text-[#b0aea5] border border-[#e8e6dc]'}`}>All Books</button>
+          <button onClick={() => setTab('dashboard')} className={`brand-btn px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm ${tab === 'dashboard' ? 'bg-[#e07a5f] text-white' : ''}`} style={tab !== 'dashboard' ? { background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' } : {}}>Dashboard</button>
+          <button onClick={() => setTab('books')} className={`brand-btn px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm ${tab === 'books' ? 'bg-[#e07a5f] text-white' : ''}`} style={tab !== 'books' ? { background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' } : {}}>All Books</button>
         </div>
       </header>
 
@@ -259,62 +328,65 @@ export default function Home() {
               <StatCard label="To Read" value={stats.summary.toRead} />
             </div>
 
+            {/* Reading Goals */}
+            <ReadingGoals stats={stats} />
+
             {/* Charts Row */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="brand-card p-6">
-                <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>Books Per Year</h2>
-                <BarChart data={stats.booksPerYear} labelKey="year" valueKey="count" color="bg-[#788c5d]" />
+                <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Books Per Year</h2>
+                <BarChart data={stats.booksPerYear} labelKey="year" valueKey="count" color="#6b8f5e" />
               </div>
 
               <div className="brand-card p-6">
-                <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>Most Read Authors</h2>
-                <BarChart data={stats.topAuthors} labelKey="author" valueKey="count" color="bg-[#6a9bcc]" />
+                <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Most Read Authors</h2>
+                <BarChart data={stats.topAuthors} labelKey="author" valueKey="count" color="#5b8fb9" />
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
               <div className="brand-card p-6">
-                <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>Rating Distribution</h2>
-                <BarChart data={stats.ratingDist} labelKey="rating" valueKey="count" color="bg-[#d97757]" />
+                <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Rating Distribution</h2>
+                <BarChart data={stats.ratingDist} labelKey="rating" valueKey="count" color="#e07a5f" />
               </div>
 
               <div className="brand-card p-6">
-                <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>Reading Format</h2>
-                <BarChart data={stats.bindingBreakdown} labelKey="format" valueKey="count" color="bg-[#788c5d]" />
+                <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Reading Format</h2>
+                <BarChart data={stats.bindingBreakdown} labelKey="format" valueKey="count" color="#6b8f5e" />
               </div>
             </div>
 
             <div className="brand-card p-6">
-              <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>Pages Read Per Year</h2>
-              <BarChart data={stats.pagesPerYear} labelKey="year" valueKey="pages" color="bg-[#6a9bcc]" />
+              <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Pages Read Per Year</h2>
+              <BarChart data={stats.pagesPerYear} labelKey="year" valueKey="pages" color="#5b8fb9" />
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
               <div className="brand-card p-6">
-                <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>5-Star Books</h2>
+                <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>5-Star Books</h2>
                 <div className="space-y-3">
                   {stats.topRated.map((b, i) => (
                     <div key={i} className="flex items-start justify-between">
                       <div>
-                        <p className="text-sm font-bold text-[#141413]">{b.title}</p>
-                        <p className="text-xs text-[#b0aea5]">{b.author}</p>
+                        <p className="text-sm font-bold" style={{color: 'var(--text-primary)'}}>{b.title}</p>
+                        <p className="text-xs" style={{color: 'var(--text-secondary)'}}>{b.author}</p>
                       </div>
-                      <span className="text-xs text-[#b0aea5] shrink-0 ml-2">{b.date_read}</span>
+                      <span className="text-xs shrink-0 ml-2" style={{color: 'var(--text-muted)'}}>{b.date_read}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="brand-card p-6">
-                <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>Longest Books</h2>
+                <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Longest Books</h2>
                 <div className="space-y-3">
                   {stats.longestBooks.map((b, i) => (
                     <div key={i} className="flex items-start justify-between">
                       <div>
-                        <p className="text-sm font-bold text-[#141413]">{b.title}</p>
-                        <p className="text-xs text-[#b0aea5]">{b.author}</p>
+                        <p className="text-sm font-bold" style={{color: 'var(--text-primary)'}}>{b.title}</p>
+                        <p className="text-xs" style={{color: 'var(--text-secondary)'}}>{b.author}</p>
                       </div>
-                      <span className="text-xs text-[#788c5d] font-bold shrink-0 ml-2">{b.num_pages} pg</span>
+                      <span className="text-xs font-bold shrink-0 ml-2" style={{color: '#6b8f5e'}}>{b.num_pages} pg</span>
                     </div>
                   ))}
                 </div>
@@ -322,8 +394,8 @@ export default function Home() {
             </div>
 
             <div className="brand-card p-6 max-w-md">
-              <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>Data Sources</h2>
-              <BarChart data={stats.sourceBreakdown} labelKey="source" valueKey="count" color="bg-[#788c5d]" />
+              <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Data Sources</h2>
+              <BarChart data={stats.sourceBreakdown} labelKey="source" valueKey="count" color="#6b8f5e" />
             </div>
 
             {/* Enhanced Analytics */}
@@ -331,7 +403,7 @@ export default function Home() {
             {/* Monthly Reading Heatmap */}
             {stats.monthlyHeatmap && stats.monthlyHeatmap.length > 0 && (
               <div className="brand-card p-6">
-                <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>Reading Heatmap</h2>
+                <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Reading Heatmap</h2>
                 <div className="space-y-1 overflow-x-auto">
                   {Object.entries(groupBy(stats.monthlyHeatmap as unknown as Record<string, unknown>[], 'year')).map(([year, months]) => (
                     <div key={year} className="flex items-center gap-1">
@@ -351,8 +423,8 @@ export default function Home() {
             {/* Publication Decade Distribution */}
             {stats.decadeDistribution && stats.decadeDistribution.length > 0 && (
               <div className="brand-card p-6">
-                <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>Publication Decades</h2>
-                <BarChart data={stats.decadeDistribution} labelKey="decade" valueKey="count" color="bg-[#6a9bcc]" />
+                <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Publication Decades</h2>
+                <BarChart data={stats.decadeDistribution} labelKey="decade" valueKey="count" color="#5b8fb9" />
               </div>
             )}
 
@@ -360,14 +432,14 @@ export default function Home() {
             <div className="grid md:grid-cols-2 gap-6">
               {stats.ratingTrend && stats.ratingTrend.length > 0 && (
                 <div className="brand-card p-6">
-                  <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>Rating Trend</h2>
-                  <BarChart data={stats.ratingTrend} labelKey="year" valueKey="avg_rating" color="bg-[#d97757]" />
+                  <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Rating Trend</h2>
+                  <BarChart data={stats.ratingTrend} labelKey="year" valueKey="avg_rating" color="#e07a5f" />
                 </div>
               )}
               {stats.avgLengthTrend && stats.avgLengthTrend.length > 0 && (
                 <div className="brand-card p-6">
-                  <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>Avg Book Length</h2>
-                  <BarChart data={stats.avgLengthTrend} labelKey="year" valueKey="avg_pages" color="bg-[#6a9bcc]" />
+                  <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Avg Book Length</h2>
+                  <BarChart data={stats.avgLengthTrend} labelKey="year" valueKey="avg_pages" color="#5b8fb9" />
                 </div>
               )}
             </div>

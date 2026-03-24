@@ -23,8 +23,20 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${poppins.variable} ${lora.variable}`}>
-      <body className="min-h-full flex flex-col bg-[#faf9f5] text-[#141413]">{children}</body>
+    <html lang="en" className={`${poppins.variable} ${lora.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            try {
+              var theme = localStorage.getItem('theme');
+              if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.setAttribute('data-theme', 'dark');
+              }
+            } catch(e) {}
+          })();
+        `}} />
+      </head>
+      <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
 }
