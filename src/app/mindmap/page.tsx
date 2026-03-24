@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import * as d3 from 'd3';
+import { useEffect, useState } from 'react';
 
 type MindmapBook = {
   id: number;
@@ -22,44 +21,32 @@ type CategoryStat = {
   books: MindmapBook[];
 };
 
-type GraphNode = d3.SimulationNodeDatum & {
-  id: string;
-  type: 'genre' | 'book';
-  label: string;
-  author?: string;
-  rating?: number;
-  color: string;
-  coverUrl?: string | null;
-  synopsis?: string | null;
-  category?: string;
-  count?: number;
-};
-
-type GraphLink = d3.SimulationLinkDatum<GraphNode> & {
-  type: 'genre-book' | 'author-link';
-};
-
-function truncate(s: string, max: number): string {
-  if (s.length <= max) return s;
-  return s.substring(0, max).replace(/\s+\S*$/, '') + '...';
-}
-
-function nodeRadius(d: GraphNode): number {
-  if (d.type === 'genre') return 25;
-  const r = d.rating || 0;
-  if (r === 5) return 9;
-  if (r >= 4) return 7;
-  if (r >= 3) return 6;
-  if (r >= 1) return 5;
-  return 4;
+function RatingDots({ rating, size = 6 }: { rating: number; size?: number }) {
+  if (!rating || rating === 0) return null;
+  return (
+    <div className="flex gap-0.5">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <span
+          key={i}
+          className="rounded-full"
+          style={{
+            width: size,
+            height: size,
+            background: i <= rating ? '#fff' : 'rgba(255,255,255,0.2)',
+            display: 'inline-block',
+          }}
+        />
+      ))}
+    </div>
+  );
 }
 
 export default function MindmapPage() {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
   const [categories, setCategories] = useState<CategoryStat[]>([]);
   const [totalBooks, setTotalBooks] = useState(0);
-  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(null);
+  const [selectedBook, setSelectedBook] = useState<MindmapBook | null>(null);
+  const [filter, setFilter] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'rating' | 'title' | 'author'>('rating');
 
   useEffect(() => {
     fetch('/api/mindmap')
@@ -67,272 +54,264 @@ export default function MindmapPage() {
       .then((data) => {
         setCategories(data.categoryStats);
         setTotalBooks(data.totalBooks);
-        buildGraph(data.categoryStats);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const buildGraph = (cats: CategoryStat[]) => {
-    const svgEl = svgRef.current;
-    if (!svgEl) return;
-    const svg = d3.select(svgEl);
-    svg.selectAll('*').remove();
+  const displayCats = filter
+    ? categories.filter((c) => c.name === filter)
+    : categories;
 
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    svg.attr('width', width).attr('height', height);
-
-    // Build nodes and links
-    const nodes: GraphNode[] = [];
-    const links: GraphLink[] = [];
-    const authorMap: Record<string, string[]> = {};
-
-    for (const cat of cats) {
-      const genreId = `genre-${cat.name}`;
-      nodes.push({
-        id: genreId, type: 'genre', label: cat.name, color: cat.color, count: cat.count,
-      });
-
-      for (const book of cat.books) {
-        const bookId = `book-${book.id}`;
-        nodes.push({
-          id: bookId, type: 'book', label: book.title,
-          author: book.author || undefined, rating: book.my_rating,
-          color: cat.color, coverUrl: book.cover_url,
-          synopsis: book.review, category: cat.name,
-        });
-        links.push({ source: genreId, target: bookId, type: 'genre-book' });
-
-        if (book.author) {
-          if (!authorMap[book.author]) authorMap[book.author] = [];
-          authorMap[book.author].push(bookId);
-        }
-      }
-    }
-
-    // Author cross-links
-    for (const bookIds of Object.values(authorMap)) {
-      if (bookIds.length > 1) {
-        for (let i = 1; i < bookIds.length; i++) {
-          links.push({ source: bookIds[0], target: bookIds[i], type: 'author-link' });
-        }
-      }
-    }
-
-    // Zoom container
-    const g = svg.append('g');
-    const zoomBehavior = d3.zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.2, 4])
-      .on('zoom', (event) => g.attr('transform', event.transform));
-    svg.call(zoomBehavior);
-    svg.call(zoomBehavior.transform, d3.zoomIdentity.translate(width / 2, height / 2).scale(0.8));
-
-    // Glow filter
-    const defs = svg.append('defs');
-    const filter = defs.append('filter').attr('id', 'glow');
-    filter.append('feGaussianBlur').attr('stdDeviation', '3').attr('result', 'coloredBlur');
-    const merge = filter.append('feMerge');
-    merge.append('feMergeNode').attr('in', 'coloredBlur');
-    merge.append('feMergeNode').attr('in', 'SourceGraphic');
-
-    // Force simulation
-    const simulation = d3.forceSimulation<GraphNode>(nodes)
-      .force('link', d3.forceLink<GraphNode, GraphLink>(links)
-        .id((d) => d.id)
-        .distance((d) => d.type === 'genre-book' ? 80 : 120)
-        .strength((d) => d.type === 'genre-book' ? 0.4 : 0.1))
-      .force('charge', d3.forceManyBody()
-        .strength((d) => (d as GraphNode).type === 'genre' ? -400 : -30))
-      .force('center', d3.forceCenter(0, 0))
-      .force('collision', d3.forceCollide<GraphNode>()
-        .radius((d) => d.type === 'genre' ? 35 : nodeRadius(d) + 2));
-
-    // Links
-    const link = g.append('g').selectAll('line').data(links).join('line')
-      .attr('stroke', (d) => d.type === 'author-link' ? '#fff' : '#555')
-      .attr('stroke-opacity', (d) => d.type === 'author-link' ? 0.08 : 0.15)
-      .attr('stroke-width', (d) => d.type === 'author-link' ? 0.5 : 0.7)
-      .attr('stroke-dasharray', (d) => d.type === 'author-link' ? '2,3' : 'none');
-
-    // Book nodes
-    const bookNode = g.append('g')
-      .selectAll<SVGCircleElement, GraphNode>('circle')
-      .data(nodes.filter((n) => n.type === 'book'))
-      .join('circle')
-      .attr('r', (d) => nodeRadius(d))
-      .attr('fill', (d) => d.color)
-      .attr('stroke', (d) => d.rating === 5 ? '#fff' : 'none')
-      .attr('stroke-width', (d) => d.rating === 5 ? 1.5 : 0)
-      .attr('opacity', (d) => (!d.rating || d.rating === 0) ? 0.4 : 0.3 + (d.rating / 5) * 0.7)
-      .attr('cursor', 'pointer')
-      .attr('filter', (d) => d.rating === 5 ? 'url(#glow)' : 'none')
-      .on('mouseover', function (event, d) {
-        d3.select(this).transition().duration(150)
-          .attr('r', nodeRadius(d) * 1.8).attr('opacity', 1);
-        showTooltip(event, d);
-      })
-      .on('mouseout', function (_, d) {
-        d3.select(this).transition().duration(300)
-          .attr('r', nodeRadius(d))
-          .attr('opacity', (!d.rating || d.rating === 0) ? 0.4 : 0.3 + (d.rating / 5) * 0.7);
-        hideTooltip();
-      })
-      .on('click', (_, d) => setSelectedNode(d))
-      .call(d3.drag<SVGCircleElement, GraphNode>()
-        .on('start', (event, d) => { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-        .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
-        .on('end', (event, d) => { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
-
-    // Genre hub nodes
-    const genreGroup = g.append('g')
-      .selectAll<SVGGElement, GraphNode>('g')
-      .data(nodes.filter((n) => n.type === 'genre'))
-      .join('g')
-      .attr('cursor', 'grab')
-      .call(d3.drag<SVGGElement, GraphNode>()
-        .on('start', (event, d) => { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
-        .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
-        .on('end', (event, d) => { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
-
-    genreGroup.append('circle')
-      .attr('r', (d) => 20 + (d.count || 0) * 0.5)
-      .attr('fill', (d) => d.color).attr('opacity', 0.25)
-      .attr('stroke', (d) => d.color).attr('stroke-width', 2);
-
-    genreGroup.append('text').text((d) => d.label)
-      .attr('text-anchor', 'middle').attr('dy', '-0.2em')
-      .attr('fill', '#fff').attr('font-size', '11px').attr('font-weight', 'bold').attr('pointer-events', 'none');
-
-    genreGroup.append('text').text((d) => `${d.count} books`)
-      .attr('text-anchor', 'middle').attr('dy', '1em')
-      .attr('fill', '#fff').attr('font-size', '9px').attr('opacity', 0.7).attr('pointer-events', 'none');
-
-    // Tick
-    simulation.on('tick', () => {
-      link
-        .attr('x1', (d) => (d.source as GraphNode).x || 0)
-        .attr('y1', (d) => (d.source as GraphNode).y || 0)
-        .attr('x2', (d) => (d.target as GraphNode).x || 0)
-        .attr('y2', (d) => (d.target as GraphNode).y || 0);
-      bookNode.attr('cx', (d) => d.x || 0).attr('cy', (d) => d.y || 0);
-      genreGroup.attr('transform', (d) => `translate(${d.x || 0},${d.y || 0})`);
+  const sortBooks = (books: MindmapBook[]) => {
+    return [...books].sort((a, b) => {
+      if (sortBy === 'rating') return (b.my_rating || 0) - (a.my_rating || 0);
+      if (sortBy === 'title') return a.title.localeCompare(b.title);
+      return (a.author || '').localeCompare(b.author || '');
     });
-
-    function showTooltip(event: MouseEvent, d: GraphNode) {
-      const tip = tooltipRef.current;
-      if (!tip) return;
-      tip.style.display = 'block';
-      tip.style.left = `${event.pageX + 15}px`;
-      tip.style.top = `${event.pageY - 10}px`;
-
-      const dots = d.rating && d.rating > 0
-        ? Array.from({ length: 5 }, (_, i) =>
-            `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:2px;background:${i < (d.rating || 0) ? '#d97757' : '#444'}"></span>`
-          ).join('')
-        : '<span style="color:#666;font-size:11px">Unrated</span>';
-
-      const cover = d.coverUrl && d.coverUrl !== 'none'
-        ? `<img src="${d.coverUrl}" style="width:50px;border-radius:4px;object-fit:cover;flex-shrink:0" />`
-        : '';
-
-      const syn = d.synopsis
-        ? `<div style="margin-top:8px;padding-top:8px;border-top:1px solid #333;font-size:11px;color:#aaa;max-height:100px;overflow-y:auto;line-height:1.4">${truncate(d.synopsis, 200)}</div>`
-        : '';
-
-      tip.innerHTML = `
-        <div style="display:flex;gap:10px;align-items:start">
-          ${cover}
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:bold;font-size:13px;color:#fff;line-height:1.3">${d.label}</div>
-            <div style="font-size:11px;color:#999;margin-top:2px">${d.author || 'Unknown'}</div>
-            <div style="margin-top:4px">${dots}</div>
-            <div style="font-size:10px;color:${d.color};margin-top:3px">${d.category || ''}</div>
-          </div>
-        </div>
-        ${syn}`;
-    }
-
-    function hideTooltip() {
-      const tip = tooltipRef.current;
-      if (tip) tip.style.display = 'none';
-    }
-
-    return () => simulation.stop();
   };
 
+  // Calculate treemap tile sizes based on rating
+  const getTileSize = (rating: number): string => {
+    if (rating === 5) return 'col-span-2 row-span-2';
+    if (rating >= 4) return 'col-span-1 row-span-2';
+    return 'col-span-1 row-span-1';
+  };
+
+  if (categories.length === 0) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#141413]">
+        <div className="text-[#b0aea5] text-sm">Loading your reading map...</div>
+      </div>
+    );
+  }
+
   return (
-    <div style={{ width: '100vw', height: '100vh', background: '#141413', overflow: 'hidden', position: 'relative' }}>
+    <div className="min-h-screen bg-[#141413] text-white">
       {/* Header */}
-      <header style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20, padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', pointerEvents: 'none' }}>
-        <div>
-          <h1 style={{ fontSize: '22px', fontWeight: 'bold', color: '#fff', margin: 0, fontFamily: 'var(--font-heading)' }}>Book Network</h1>
-          <p style={{ fontSize: '13px', color: '#b0aea5', margin: '4px 0 0' }}>
-            {totalBooks} books &middot; {categories.length} genres &middot; drag nodes &middot; scroll to zoom &middot; click for details
-          </p>
+      <header className="sticky top-0 z-20 bg-[#141413]/90 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+          <div>
+            <h1 className="text-lg sm:text-xl font-bold" style={{ fontFamily: 'var(--font-heading)' }}>
+              Reading Map
+            </h1>
+            <p className="text-xs text-[#b0aea5]">
+              {totalBooks} books across {categories.length} genres
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <a href="/" className="px-3 py-1.5 bg-white/10 text-white rounded-lg text-xs hover:bg-white/20 transition">
+              Dashboard
+            </a>
+            <a href="/recommendations" className="px-3 py-1.5 bg-[#d97757]/80 text-white rounded-lg text-xs hover:bg-[#d97757] transition">
+              Recs
+            </a>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '8px', pointerEvents: 'all' }}>
-          <a href="/" style={{ padding: '8px 16px', background: 'rgba(255,255,255,0.1)', color: '#fff', borderRadius: '8px', fontSize: '13px', textDecoration: 'none', backdropFilter: 'blur(8px)' }}>Dashboard</a>
-          <a href="/recommendations" style={{ padding: '8px 16px', background: 'rgba(217,119,87,0.8)', color: '#fff', borderRadius: '8px', fontSize: '13px', textDecoration: 'none' }}>Recommendations</a>
+
+        {/* Filter bar */}
+        <div className="max-w-7xl mx-auto px-4 pb-3 flex gap-2 overflow-x-auto scrollbar-hide">
+          <button
+            onClick={() => setFilter(null)}
+            className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition ${
+              !filter ? 'bg-white text-[#141413]' : 'bg-white/10 text-white/60 hover:bg-white/20'
+            }`}
+          >
+            All ({totalBooks})
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.name}
+              onClick={() => setFilter(filter === cat.name ? null : cat.name)}
+              className={`px-3 py-1 rounded-full text-xs whitespace-nowrap transition flex items-center gap-1.5 ${
+                filter === cat.name ? 'text-white' : 'text-white/60 hover:text-white/80'
+              }`}
+              style={{
+                background: filter === cat.name ? cat.color : 'rgba(255,255,255,0.07)',
+              }}
+            >
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ background: cat.color }}
+              />
+              {cat.name} ({cat.count})
+            </button>
+          ))}
+        </div>
+
+        {/* Sort */}
+        <div className="max-w-7xl mx-auto px-4 pb-2 flex gap-1">
+          {(['rating', 'title', 'author'] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setSortBy(s)}
+              className={`px-2 py-0.5 rounded text-[10px] uppercase tracking-wider transition ${
+                sortBy === s ? 'bg-white/15 text-white' : 'text-white/30 hover:text-white/50'
+              }`}
+            >
+              {s}
+            </button>
+          ))}
         </div>
       </header>
 
-      {/* Genre Legend */}
-      <div style={{ position: 'absolute', bottom: '20px', left: '20px', zIndex: 20, display: 'flex', flexWrap: 'wrap', gap: '8px', maxWidth: '500px', pointerEvents: 'none' }}>
-        {categories.map((cat) => (
-          <div key={cat.name} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', borderRadius: '20px', padding: '4px 12px' }}>
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: cat.color, display: 'inline-block' }} />
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>{cat.name} ({cat.count})</span>
-          </div>
+      {/* Treemap Content */}
+      <main className="max-w-7xl mx-auto px-4 py-6 space-y-8">
+        {displayCats.map((cat) => (
+          <section key={cat.name}>
+            {/* Genre Header */}
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="w-3 h-3 rounded-full"
+                style={{ background: cat.color }}
+              />
+              <h2 className="text-sm font-bold uppercase tracking-wider" style={{ color: cat.color, fontFamily: 'var(--font-heading)' }}>
+                {cat.name}
+              </h2>
+              <span className="text-xs text-white/30">
+                {cat.count} books &middot; {cat.fiveStarCount} five-star &middot; avg {cat.avgRating}
+              </span>
+            </div>
+
+            {/* Book Tiles */}
+            <div
+              className="grid gap-1.5"
+              style={{
+                gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+                gridAutoRows: '80px',
+              }}
+            >
+              {sortBooks(cat.books).map((book) => {
+                const is5star = book.my_rating === 5;
+                const is4star = book.my_rating >= 4;
+                return (
+                  <div
+                    key={book.id}
+                    className={`relative rounded-lg overflow-hidden cursor-pointer group transition-all duration-200 hover:ring-2 hover:ring-white/30 hover:z-10 hover:scale-[1.02] ${
+                      is5star ? 'col-span-2 row-span-2' : is4star ? 'row-span-2' : ''
+                    }`}
+                    style={{ background: cat.color + '20' }}
+                    onClick={() => setSelectedBook(book)}
+                  >
+                    {/* Cover background */}
+                    {book.cover_url && book.cover_url !== 'none' && (
+                      <img
+                        src={book.cover_url}
+                        alt=""
+                        className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity"
+                      />
+                    )}
+
+                    {/* Gradient overlay */}
+                    <div
+                      className="absolute inset-0"
+                      style={{
+                        background: `linear-gradient(135deg, ${cat.color}cc 0%, ${cat.color}40 100%)`,
+                      }}
+                    />
+
+                    {/* Content */}
+                    <div className="relative h-full p-2.5 flex flex-col justify-end">
+                      <RatingDots rating={book.my_rating} size={is5star ? 7 : 5} />
+                      <h3
+                        className={`font-bold leading-tight mt-1 line-clamp-2 ${
+                          is5star ? 'text-sm' : 'text-xs'
+                        }`}
+                        style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
+                      >
+                        {book.title.replace(/\s*\(.*?\)\s*/g, '')}
+                      </h3>
+                      <p
+                        className={`text-white/60 mt-0.5 truncate ${
+                          is5star ? 'text-xs' : 'text-[10px]'
+                        }`}
+                      >
+                        {book.author || 'Unknown'}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
         ))}
-      </div>
+      </main>
 
-      {/* Size Legend */}
-      <div style={{ position: 'absolute', bottom: '20px', right: '20px', zIndex: 20, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)', borderRadius: '10px', padding: '10px 16px', pointerEvents: 'none' }}>
-        <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '6px' }}>Dot Size = Rating</div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {[{ size: 4, label: 'Unrated' }, { size: 6, label: '3' }, { size: 7, label: '4' }, { size: 9, label: '5' }].map((s) => (
-            <div key={s.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px' }}>
-              <div style={{ width: s.size * 2, height: s.size * 2, borderRadius: '50%', background: 'rgba(255,255,255,0.4)' }} />
-              <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>{s.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* D3 SVG */}
-      <svg ref={svgRef} style={{ width: '100%', height: '100%', display: 'block' }} />
-
-      {/* Hover Tooltip */}
-      <div ref={tooltipRef} style={{ display: 'none', position: 'absolute', zIndex: 30, background: '#1a1a19', border: '1px solid #333', borderRadius: '10px', padding: '12px', maxWidth: '320px', pointerEvents: 'none', boxShadow: '0 8px 32px rgba(0,0,0,0.6)' }} />
-
-      {/* Click Detail Modal */}
-      {selectedNode && selectedNode.type === 'book' && (
-        <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setSelectedNode(null)}>
-          <div style={{ background: '#1a1a19', border: '1px solid #333', borderRadius: '16px', padding: '24px', maxWidth: '480px', width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.8)' }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'start' }}>
-              {selectedNode.coverUrl && selectedNode.coverUrl !== 'none' && (
-                <img src={selectedNode.coverUrl} alt={selectedNode.label} style={{ width: '80px', borderRadius: '6px', objectFit: 'cover', flexShrink: 0 }} />
-              )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                  <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', margin: 0, lineHeight: 1.3, fontFamily: 'var(--font-heading)' }}>{selectedNode.label}</h2>
-                  <button onClick={() => setSelectedNode(null)} style={{ background: 'none', border: 'none', color: '#666', fontSize: '20px', cursor: 'pointer', marginLeft: '8px', flexShrink: 0 }}>&times;</button>
-                </div>
-                <p style={{ fontSize: '13px', color: '#999', marginTop: '4px' }}>{selectedNode.author || 'Unknown author'}</p>
-                <div style={{ marginTop: '8px', display: 'flex', gap: '3px' }}>
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <span key={i} style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '50%', background: i <= (selectedNode.rating || 0) ? '#d97757' : '#444' }} />
-                  ))}
-                </div>
-                <div style={{ fontSize: '11px', color: selectedNode.color, marginTop: '6px' }}>{selectedNode.category}</div>
-              </div>
-            </div>
-            {selectedNode.synopsis && (
-              <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #333' }}>
-                <h3 style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '8px' }}>Synopsis</h3>
-                <p style={{ fontSize: '13px', color: '#ccc', lineHeight: 1.6, maxHeight: '200px', overflowY: 'auto' }}>{selectedNode.synopsis}</p>
+      {/* Book Detail Modal */}
+      {selectedBook && (
+        <div
+          className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+          onClick={() => setSelectedBook(null)}
+        >
+          <div
+            className="bg-[#1a1a19] rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Cover banner */}
+            {selectedBook.cover_url && selectedBook.cover_url !== 'none' && (
+              <div className="relative h-48 overflow-hidden rounded-t-2xl">
+                <img
+                  src={selectedBook.cover_url}
+                  alt=""
+                  className="w-full h-full object-cover blur-sm scale-110 opacity-40"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1a1a19] to-transparent" />
+                <img
+                  src={selectedBook.cover_url}
+                  alt={selectedBook.title}
+                  className="absolute bottom-4 left-6 w-20 rounded-lg shadow-2xl"
+                />
               </div>
             )}
+
+            <div className="p-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h2
+                    className="text-xl font-bold leading-tight"
+                    style={{ fontFamily: 'var(--font-heading)' }}
+                  >
+                    {selectedBook.title}
+                  </h2>
+                  <p className="text-sm text-[#b0aea5] mt-1">
+                    {selectedBook.author || 'Unknown author'}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedBook(null)}
+                  className="text-white/30 hover:text-white text-2xl ml-4 -mt-1"
+                >
+                  &times;
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3 mt-3">
+                <RatingDots rating={selectedBook.my_rating} size={10} />
+                {selectedBook.my_rating > 0 && (
+                  <span className="text-xs text-white/40">
+                    {selectedBook.my_rating}/5
+                  </span>
+                )}
+                <span
+                  className="text-xs px-2 py-0.5 rounded-full"
+                  style={{
+                    background: categories.find((c) => c.name === selectedBook.category)?.color + '30',
+                    color: categories.find((c) => c.name === selectedBook.category)?.color,
+                  }}
+                >
+                  {selectedBook.category}
+                </span>
+              </div>
+
+              {selectedBook.review && (
+                <div className="mt-5 pt-5 border-t border-white/10">
+                  <h3 className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-2">
+                    Synopsis
+                  </h3>
+                  <p className="text-sm text-white/70 leading-relaxed">
+                    {selectedBook.review}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

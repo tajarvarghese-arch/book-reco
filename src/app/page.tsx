@@ -226,24 +226,24 @@ export default function Home() {
     <div className="min-h-screen bg-[#faf9f5]">
       {/* Header */}
       <header className="bg-white border-b border-[#e8e6dc] sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[#141413]" style={{fontFamily: 'var(--font-heading)'}}>Book Tracker</h1>
-            <p className="text-sm text-[#b0aea5]">{stats.summary.totalBooks} books read</p>
+            <h1 className="text-lg sm:text-2xl font-bold text-[#141413]" style={{fontFamily: 'var(--font-heading)'}}>Book Tracker</h1>
+            <p className="text-xs sm:text-sm text-[#b0aea5]">{stats.summary.totalBooks} books read</p>
           </div>
-          <div className="flex gap-2">
-            <a href="/mindmap" className="brand-btn px-4 py-2 bg-[#6a9bcc] text-white text-sm">Reading Mindmap</a>
-            <a href="/recommendations" className="brand-btn px-4 py-2 bg-[#788c5d] text-white text-sm">Recommendations</a>
-            <a href="/screen" className="brand-btn px-4 py-2 bg-white border border-[#e8e6dc] text-[#141413] text-sm">Edit Library</a>
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto">
+            <a href="/mindmap" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#6a9bcc] text-white text-xs sm:text-sm whitespace-nowrap">Map</a>
+            <a href="/recommendations" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#788c5d] text-white text-xs sm:text-sm whitespace-nowrap">Recs</a>
+            <a href="/screen" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 bg-white border border-[#e8e6dc] text-[#141413] text-xs sm:text-sm whitespace-nowrap">Edit</a>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-6 pb-3 flex gap-2">
-          <button onClick={() => setTab('dashboard')} className={`brand-btn px-4 py-2 text-sm ${tab === 'dashboard' ? 'bg-[#d97757] text-white' : 'bg-[#faf9f5] text-[#b0aea5] border border-[#e8e6dc]'}`}>Dashboard</button>
-          <button onClick={() => setTab('books')} className={`brand-btn px-4 py-2 text-sm ${tab === 'books' ? 'bg-[#d97757] text-white' : 'bg-[#faf9f5] text-[#b0aea5] border border-[#e8e6dc]'}`}>All Books</button>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-2 sm:pb-3 flex gap-2">
+          <button onClick={() => setTab('dashboard')} className={`brand-btn px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm ${tab === 'dashboard' ? 'bg-[#d97757] text-white' : 'bg-[#faf9f5] text-[#b0aea5] border border-[#e8e6dc]'}`}>Dashboard</button>
+          <button onClick={() => setTab('books')} className={`brand-btn px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm ${tab === 'books' ? 'bg-[#d97757] text-white' : 'bg-[#faf9f5] text-[#b0aea5] border border-[#e8e6dc]'}`}>All Books</button>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {tab === 'dashboard' ? (
           <div className="space-y-8">
             {/* Summary Cards */}
@@ -332,15 +332,15 @@ export default function Home() {
             {stats.monthlyHeatmap && stats.monthlyHeatmap.length > 0 && (
               <div className="brand-card p-6">
                 <h2 className="text-sm font-semibold text-[#d97757] mb-4" style={{fontFamily: 'var(--font-heading)'}}>Reading Heatmap</h2>
-                <div className="space-y-1">
+                <div className="space-y-1 overflow-x-auto">
                   {Object.entries(groupBy(stats.monthlyHeatmap as unknown as Record<string, unknown>[], 'year')).map(([year, months]) => (
                     <div key={year} className="flex items-center gap-1">
-                      <span className="text-xs text-[#b0aea5] w-12">{year}</span>
+                      <span className="text-xs text-[#b0aea5] w-10 sm:w-12 shrink-0">{year}</span>
                       {Array.from({ length: 12 }, (_, i) => {
                         const m = months.find((item: Record<string, unknown>) => (item as unknown as { month: number }).month === i + 1);
                         const count = m ? (m as unknown as { count: number }).count : 0;
                         const intensity = count === 0 ? 'bg-[#e8e6dc]' : count <= 1 ? 'bg-[#d4c5b0]' : count <= 3 ? 'bg-[#d97757]/60' : 'bg-[#d97757]';
-                        return <div key={i} className={`w-5 h-5 rounded ${intensity}`} title={`${year}-${String(i + 1).padStart(2, '0')}: ${count} books`} />;
+                        return <div key={i} className={`w-4 h-4 sm:w-5 sm:h-5 rounded shrink-0 ${intensity}`} title={`${year}-${String(i + 1).padStart(2, '0')}: ${count} books`} />;
                       })}
                     </div>
                   ))}
@@ -385,13 +385,13 @@ export default function Home() {
         ) : (
           <div className="space-y-4">
             {/* Filters */}
-            <div className="flex flex-wrap gap-3 items-center">
+            <div className="flex flex-wrap gap-2 sm:gap-3 items-center">
               <input
                 type="text"
                 placeholder="Search books or authors..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="brand-input px-4 py-2 text-sm w-64"
+                className="brand-input px-3 sm:px-4 py-2 text-sm w-full sm:w-64"
               />
               <select
                 value={shelf}
@@ -427,9 +427,9 @@ export default function Home() {
             </div>
 
             {/* Book Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-4">
               {books.map((book) => (
-                <div key={book.id} className="brand-card p-3 flex flex-col items-center text-center group relative cursor-pointer hover:shadow-md transition-shadow" onClick={() => openSynopsis(book)}>
+                <div key={book.id} className="brand-card p-2 sm:p-3 flex flex-col items-center text-center group relative cursor-pointer hover:shadow-md transition-shadow" onClick={() => openSynopsis(book)}>
                   <button
                     onClick={(e) => { e.stopPropagation(); handleDelete(book.id); }}
                     className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-50 text-red-400 text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100 hover:text-red-600 z-10"
