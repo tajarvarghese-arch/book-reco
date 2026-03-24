@@ -45,6 +45,8 @@ export default function MindmapPage() {
   const [categories, setCategories] = useState<CategoryStat[]>([]);
   const [totalBooks, setTotalBooks] = useState(0);
   const [selectedBook, setSelectedBook] = useState<MindmapBook | null>(null);
+  const [synopsisText, setSynopsisText] = useState<string | null>(null);
+  const [synopsisLoading, setSynopsisLoading] = useState(false);
   const [filter, setFilter] = useState<string | null>(null);
   const [sortBy, setSortBy] = useState<'rating' | 'title' | 'author'>('rating');
 
@@ -69,11 +71,18 @@ export default function MindmapPage() {
     });
   };
 
-  // Calculate treemap tile sizes based on rating
-  const getTileSize = (rating: number): string => {
-    if (rating === 5) return 'col-span-2 row-span-2';
-    if (rating >= 4) return 'col-span-1 row-span-2';
-    return 'col-span-1 row-span-1';
+  const openBook = async (book: MindmapBook) => {
+    setSelectedBook(book);
+    setSynopsisText(null);
+    setSynopsisLoading(true);
+    try {
+      const res = await fetch(`/api/books/synopsis?id=${book.id}`);
+      const data = await res.json();
+      setSynopsisText(data.synopsis || 'No synopsis available.');
+    } catch {
+      setSynopsisText('Failed to load synopsis.');
+    }
+    setSynopsisLoading(false);
   };
 
   if (categories.length === 0) {
@@ -172,60 +181,52 @@ export default function MindmapPage() {
             </div>
 
             {/* Book Tiles */}
-            <div
-              className="grid gap-1.5"
-              style={{
-                gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
-                gridAutoRows: '80px',
-              }}
-            >
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
               {sortBooks(cat.books).map((book) => {
                 const is5star = book.my_rating === 5;
-                const is4star = book.my_rating >= 4;
+                const hasCover = book.cover_url && book.cover_url !== 'none';
                 return (
                   <div
                     key={book.id}
-                    className={`relative rounded-lg overflow-hidden cursor-pointer group transition-all duration-200 hover:ring-2 hover:ring-white/30 hover:z-10 hover:scale-[1.02] ${
-                      is5star ? 'col-span-2 row-span-2' : is4star ? 'row-span-2' : ''
+                    className={`rounded-lg overflow-hidden cursor-pointer group transition-all duration-200 hover:ring-2 hover:ring-white/30 hover:scale-[1.02] ${
+                      is5star ? 'col-span-2 sm:col-span-2' : ''
                     }`}
-                    style={{ background: cat.color + '20' }}
-                    onClick={() => setSelectedBook(book)}
+                    style={{ background: cat.color + '15', borderLeft: `3px solid ${cat.color}` }}
+                    onClick={() => openBook(book)}
                   >
-                    {/* Cover background */}
-                    {book.cover_url && book.cover_url !== 'none' && (
-                      <img
-                        src={book.cover_url}
-                        alt=""
-                        className="absolute inset-0 w-full h-full object-cover opacity-30 group-hover:opacity-50 transition-opacity"
-                      />
-                    )}
+                    <div className={`flex ${is5star ? 'flex-row' : 'flex-row'} h-full`}>
+                      {/* Cover */}
+                      {hasCover ? (
+                        <img
+                          src={book.cover_url!}
+                          alt=""
+                          className={`object-cover shrink-0 ${is5star ? 'w-24 h-36' : 'w-16 h-24'}`}
+                        />
+                      ) : (
+                        <div
+                          className={`shrink-0 flex items-center justify-center ${is5star ? 'w-24 h-36' : 'w-16 h-24'}`}
+                          style={{ background: cat.color + '30' }}
+                        >
+                          <span className="text-white/20 text-lg">📖</span>
+                        </div>
+                      )}
 
-                    {/* Gradient overlay */}
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        background: `linear-gradient(135deg, ${cat.color}cc 0%, ${cat.color}40 100%)`,
-                      }}
-                    />
-
-                    {/* Content */}
-                    <div className="relative h-full p-2.5 flex flex-col justify-end">
-                      <RatingDots rating={book.my_rating} size={is5star ? 7 : 5} />
-                      <h3
-                        className={`font-bold leading-tight mt-1 line-clamp-2 ${
-                          is5star ? 'text-sm' : 'text-xs'
-                        }`}
-                        style={{ textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}
-                      >
-                        {book.title.replace(/\s*\(.*?\)\s*/g, '')}
-                      </h3>
-                      <p
-                        className={`text-white/60 mt-0.5 truncate ${
-                          is5star ? 'text-xs' : 'text-[10px]'
-                        }`}
-                      >
-                        {book.author || 'Unknown'}
-                      </p>
+                      {/* Text */}
+                      <div className={`flex-1 min-w-0 flex flex-col justify-center ${is5star ? 'p-3' : 'p-2'}`}>
+                        <h3
+                          className={`font-bold leading-tight text-white line-clamp-2 ${
+                            is5star ? 'text-sm' : 'text-xs'
+                          }`}
+                        >
+                          {book.title.replace(/\s*\(.*?\)\s*/g, '')}
+                        </h3>
+                        <p className="text-white/50 text-[10px] mt-0.5 truncate">
+                          {book.author || 'Unknown'}
+                        </p>
+                        <div className="mt-1">
+                          <RatingDots rating={book.my_rating} size={is5star ? 6 : 5} />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 );
@@ -301,16 +302,18 @@ export default function MindmapPage() {
                 </span>
               </div>
 
-              {selectedBook.review && (
-                <div className="mt-5 pt-5 border-t border-white/10">
-                  <h3 className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-2">
-                    Synopsis
-                  </h3>
+              <div className="mt-5 pt-5 border-t border-white/10">
+                <h3 className="text-[10px] font-semibold text-white/30 uppercase tracking-widest mb-2">
+                  Synopsis
+                </h3>
+                {synopsisLoading ? (
+                  <p className="text-sm text-white/40 italic">Loading synopsis...</p>
+                ) : (
                   <p className="text-sm text-white/70 leading-relaxed">
-                    {selectedBook.review}
+                    {synopsisText || 'No synopsis available.'}
                   </p>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
