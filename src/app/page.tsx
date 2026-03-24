@@ -53,9 +53,8 @@ function Stars({ rating, onRate }: { rating: number; onRate?: (r: number) => voi
       {[1, 2, 3, 4, 5].map((i) => (
         <span
           key={i}
-          className={`inline-block w-2.5 h-2.5 rounded-full transition-colors ${
-            i <= rating ? 'bg-[#d97757]' : 'bg-[#e8e6dc]'
-          } ${onRate ? 'cursor-pointer hover:bg-[#d97757] hover:opacity-70' : ''}`}
+          className={`inline-block w-2.5 h-2.5 rounded-full transition-colors ${onRate ? 'cursor-pointer hover:opacity-70' : ''}`}
+          style={{ background: i <= rating ? 'var(--accent-warm)' : 'var(--border)' }}
           onClick={(e) => { e.stopPropagation(); onRate?.(i === rating ? 0 : i); }}
         />
       ))}
@@ -300,15 +299,15 @@ export default function Home() {
             <p className="text-xs sm:text-sm" style={{color: 'var(--text-secondary)'}}>{stats.summary.totalBooks} books read</p>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-2">
-            <a href="/mindmap" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#5b8fb9] text-white text-xs sm:text-sm whitespace-nowrap">Map</a>
-            <a href="/recommendations" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 bg-[#6b8f5e] text-white text-xs sm:text-sm whitespace-nowrap">Recs</a>
+            <a href="/mindmap" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 text-white text-xs sm:text-sm whitespace-nowrap" style={{background: 'var(--accent)'}}>Map</a>
+            <a href="/recommendations" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 text-white text-xs sm:text-sm whitespace-nowrap" style={{background: 'var(--accent-warm)'}}>Recs</a>
             <a href="/screen" className="brand-btn px-2.5 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm whitespace-nowrap" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>Edit</a>
             <ThemeToggle />
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-2 sm:pb-3 flex gap-2">
-          <button onClick={() => setTab('dashboard')} className={`brand-btn px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm ${tab === 'dashboard' ? 'bg-[#e07a5f] text-white' : ''}`} style={tab !== 'dashboard' ? { background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' } : {}}>Dashboard</button>
-          <button onClick={() => setTab('books')} className={`brand-btn px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm ${tab === 'books' ? 'bg-[#e07a5f] text-white' : ''}`} style={tab !== 'books' ? { background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' } : {}}>All Books</button>
+          <button onClick={() => setTab('dashboard')} className={`brand-btn px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm ${tab === 'dashboard' ? 'text-white' : ''}`} style={tab === 'dashboard' ? { background: 'var(--accent)' } : { background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>Dashboard</button>
+          <button onClick={() => setTab('books')} className={`brand-btn px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm ${tab === 'books' ? 'text-white' : ''}`} style={tab === 'books' ? { background: 'var(--accent)' } : { background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>All Books</button>
         </div>
       </header>
 
@@ -335,30 +334,30 @@ export default function Home() {
             <div className="grid md:grid-cols-2 gap-6">
               <div className="brand-card p-6">
                 <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Books Per Year</h2>
-                <BarChart data={stats.booksPerYear} labelKey="year" valueKey="count" color="#6b8f5e" />
+                <BarChart data={stats.booksPerYear} labelKey="year" valueKey="count" color="#5e6b4f" />
               </div>
 
               <div className="brand-card p-6">
                 <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Most Read Authors</h2>
-                <BarChart data={stats.topAuthors} labelKey="author" valueKey="count" color="#5b8fb9" />
+                <BarChart data={stats.topAuthors} labelKey="author" valueKey="count" color="#2d4a3e" />
               </div>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
               <div className="brand-card p-6">
                 <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Rating Distribution</h2>
-                <BarChart data={stats.ratingDist} labelKey="rating" valueKey="count" color="#e07a5f" />
+                <BarChart data={stats.ratingDist} labelKey="rating" valueKey="count" color="#8b3a3a" />
               </div>
 
               <div className="brand-card p-6">
                 <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Reading Format</h2>
-                <BarChart data={stats.bindingBreakdown} labelKey="format" valueKey="count" color="#6b8f5e" />
+                <BarChart data={stats.bindingBreakdown} labelKey="format" valueKey="count" color="#5e6b4f" />
               </div>
             </div>
 
             <div className="brand-card p-6">
               <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Pages Read Per Year</h2>
-              <BarChart data={stats.pagesPerYear} labelKey="year" valueKey="pages" color="#5b8fb9" />
+              <BarChart data={stats.pagesPerYear} labelKey="year" valueKey="pages" color="#2d4a3e" />
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
@@ -395,7 +394,7 @@ export default function Home() {
 
             <div className="brand-card p-6 max-w-md">
               <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Data Sources</h2>
-              <BarChart data={stats.sourceBreakdown} labelKey="source" valueKey="count" color="#6b8f5e" />
+              <BarChart data={stats.sourceBreakdown} labelKey="source" valueKey="count" color="#5e6b4f" />
             </div>
 
             {/* Enhanced Analytics */}
@@ -407,11 +406,11 @@ export default function Home() {
                 <div className="space-y-1 overflow-x-auto">
                   {Object.entries(groupBy(stats.monthlyHeatmap as unknown as Record<string, unknown>[], 'year')).map(([year, months]) => (
                     <div key={year} className="flex items-center gap-1">
-                      <span className="text-xs text-[#b0aea5] w-10 sm:w-12 shrink-0">{year}</span>
+                      <span className="text-xs text-[var(--text-muted)] w-10 sm:w-12 shrink-0">{year}</span>
                       {Array.from({ length: 12 }, (_, i) => {
                         const m = months.find((item: Record<string, unknown>) => (item as unknown as { month: number }).month === i + 1);
                         const count = m ? (m as unknown as { count: number }).count : 0;
-                        const intensity = count === 0 ? 'bg-[#e8e6dc]' : count <= 1 ? 'bg-[#d4c5b0]' : count <= 3 ? 'bg-[#d97757]/60' : 'bg-[#d97757]';
+                        const intensity = count === 0 ? 'bg-[#ddd5c8]' : count <= 1 ? 'bg-[#b5c4a8]' : count <= 3 ? 'bg-[#5e6b4f]' : 'bg-[#2d4a3e]';
                         return <div key={i} className={`w-4 h-4 sm:w-5 sm:h-5 rounded shrink-0 ${intensity}`} title={`${year}-${String(i + 1).padStart(2, '0')}: ${count} books`} />;
                       })}
                     </div>
@@ -424,7 +423,7 @@ export default function Home() {
             {stats.decadeDistribution && stats.decadeDistribution.length > 0 && (
               <div className="brand-card p-6">
                 <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Publication Decades</h2>
-                <BarChart data={stats.decadeDistribution} labelKey="decade" valueKey="count" color="#5b8fb9" />
+                <BarChart data={stats.decadeDistribution} labelKey="decade" valueKey="count" color="#2d4a3e" />
               </div>
             )}
 
@@ -433,13 +432,13 @@ export default function Home() {
               {stats.ratingTrend && stats.ratingTrend.length > 0 && (
                 <div className="brand-card p-6">
                   <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Rating Trend</h2>
-                  <BarChart data={stats.ratingTrend} labelKey="year" valueKey="avg_rating" color="#e07a5f" />
+                  <BarChart data={stats.ratingTrend} labelKey="year" valueKey="avg_rating" color="#8b3a3a" />
                 </div>
               )}
               {stats.avgLengthTrend && stats.avgLengthTrend.length > 0 && (
                 <div className="brand-card p-6">
                   <h2 className="text-sm font-semibold mb-4" style={{fontFamily: 'var(--font-heading)', color: 'var(--accent)'}}>Avg Book Length</h2>
-                  <BarChart data={stats.avgLengthTrend} labelKey="year" valueKey="avg_pages" color="#5b8fb9" />
+                  <BarChart data={stats.avgLengthTrend} labelKey="year" valueKey="avg_pages" color="#2d4a3e" />
                 </div>
               )}
             </div>
@@ -488,14 +487,14 @@ export default function Home() {
               </select>
               <button
                 onClick={() => setOrder(order === 'DESC' ? 'ASC' : 'DESC')}
-                className="brand-btn px-3 py-2 bg-white border border-[#e8e6dc] text-[#b0aea5] text-sm"
+                className="brand-btn px-3 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] text-sm"
               >
                 {order === 'DESC' ? '\u2193 Desc' : '\u2191 Asc'}
               </button>
-              <button onClick={() => setShowAddModal(true)} className="brand-btn px-4 py-2 bg-[#d97757] text-white text-sm">
+              <button onClick={() => setShowAddModal(true)} className="brand-btn px-4 py-2 bg-[#2d4a3e] text-white text-sm">
                 + Add Book
               </button>
-              <span className="text-sm text-[#b0aea5] ml-auto">{total} books</span>
+              <span className="text-sm text-[var(--text-muted)] ml-auto">{total} books</span>
             </div>
 
             {/* Book Grid */}
@@ -510,12 +509,12 @@ export default function Home() {
                     &times;
                   </button>
                   <BookCover coverUrl={book.cover_url} title={book.title} size="md" />
-                  <h3 className="text-sm font-semibold text-[#141413] mt-2 line-clamp-2 leading-tight">{book.title}</h3>
-                  <p className="text-xs text-[#b0aea5] mt-1">{book.author || 'Unknown'}</p>
+                  <h3 className="text-sm font-semibold text-[var(--text-primary)] mt-2 line-clamp-2 leading-tight">{book.title}</h3>
+                  <p className="text-xs text-[var(--text-muted)] mt-1">{book.author || 'Unknown'}</p>
                   <div className="mt-1.5" onClick={(e) => e.stopPropagation()}>
                     <Stars rating={book.my_rating} onRate={(r) => handleRate(book.id, r)} />
                   </div>
-                  {book.date_read && <p className="text-[10px] text-[#b0aea5] mt-1">{book.date_read}</p>}
+                  {book.date_read && <p className="text-[10px] text-[var(--text-muted)] mt-1">{book.date_read}</p>}
                 </div>
               ))}
             </div>
@@ -526,17 +525,17 @@ export default function Home() {
                 <button
                   onClick={() => setPage(Math.max(0, page - 1))}
                   disabled={page === 0}
-                  className="brand-btn px-4 py-2 bg-white border border-[#e8e6dc] text-[#b0aea5] text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="brand-btn px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] text-sm disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-[#b0aea5]">
+                <span className="text-sm text-[var(--text-muted)]">
                   Page {page + 1} of {totalPages}
                 </span>
                 <button
                   onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
                   disabled={page >= totalPages - 1}
-                  className="brand-btn px-4 py-2 bg-white border border-[#e8e6dc] text-[#b0aea5] text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="brand-btn px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] text-sm disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
@@ -548,11 +547,11 @@ export default function Home() {
 
       {showAddModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setShowAddModal(false)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
-            <div className="p-6 border-b border-[#e8e6dc]">
+          <div className="bg-[var(--bg-card)] rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="p-6 border-b border-[var(--border)]">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold" style={{fontFamily: 'var(--font-heading)'}}>Add a Book</h2>
-                <button onClick={() => setShowAddModal(false)} className="text-[#b0aea5] hover:text-[#141413] text-xl">&times;</button>
+                <button onClick={() => setShowAddModal(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xl">&times;</button>
               </div>
               <input
                 type="text"
@@ -568,24 +567,24 @@ export default function Home() {
               />
             </div>
             <div className="overflow-y-auto max-h-[60vh] p-4 space-y-3">
-              {addLoading && <p className="text-center text-[#b0aea5] py-4">Searching...</p>}
+              {addLoading && <p className="text-center text-[var(--text-muted)] py-4">Searching...</p>}
               {!addLoading && addResults.length === 0 && addSearch.length >= 2 && (
-                <p className="text-center text-[#b0aea5] py-4">No results found</p>
+                <p className="text-center text-[var(--text-muted)] py-4">No results found</p>
               )}
               {addResults.map((book, i) => (
-                <div key={book.key || i} className="flex items-start gap-4 p-3 border border-[#e8e6dc] rounded-lg hover:bg-[#faf9f5]">
+                <div key={book.key || i} className="flex items-start gap-4 p-3 border border-[var(--border)] rounded-lg hover:bg-[var(--bg-page)]">
                   {book.coverUrl ? (
                     <img src={book.coverUrl} alt={book.title} className="w-12 rounded object-cover shrink-0" style={{height: 72}} />
                   ) : (
-                    <div className="w-12 rounded bg-[#e8e6dc] shrink-0 flex items-center justify-center text-[#b0aea5] text-xs" style={{height: 72}}>No cover</div>
+                    <div className="w-12 rounded bg-[var(--border)] shrink-0 flex items-center justify-center text-[var(--text-muted)] text-xs" style={{height: 72}}>No cover</div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm text-[#141413] truncate">{book.title}</h3>
-                    <p className="text-xs text-[#b0aea5]">{book.author || 'Unknown'} {book.year ? `(${book.year})` : ''} {book.pages ? `- ${book.pages} pg` : ''}</p>
+                    <h3 className="font-semibold text-sm text-[var(--text-primary)] truncate">{book.title}</h3>
+                    <p className="text-xs text-[var(--text-muted)]">{book.author || 'Unknown'} {book.year ? `(${book.year})` : ''} {book.pages ? `- ${book.pages} pg` : ''}</p>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <button onClick={() => handleAddBook(book, 'read')} className="brand-btn px-3 py-1.5 bg-[#d97757] text-white text-xs">Read</button>
-                    <button onClick={() => handleAddBook(book, 'to-read')} className="brand-btn px-3 py-1.5 bg-[#788c5d] text-white text-xs">To Read</button>
+                    <button onClick={() => handleAddBook(book, 'read')} className="brand-btn px-3 py-1.5 bg-[#2d4a3e] text-white text-xs">Read</button>
+                    <button onClick={() => handleAddBook(book, 'to-read')} className="brand-btn px-3 py-1.5 bg-[#5e6b4f] text-white text-xs">To Read</button>
                   </div>
                 </div>
               ))}
@@ -597,17 +596,17 @@ export default function Home() {
       {/* Synopsis Modal */}
       {synopsisBook && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" onClick={() => setSynopsisBook(null)}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden" onClick={e => e.stopPropagation()}>
+          <div className="bg-[var(--bg-card)] rounded-xl shadow-2xl w-full max-w-lg overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="p-6">
               <div className="flex gap-5">
                 <BookCover coverUrl={synopsisBook.cover_url} title={synopsisBook.title} size="lg" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
-                    <h2 className="text-lg font-bold text-[#141413] leading-tight" style={{fontFamily: 'var(--font-heading)'}}>{synopsisBook.title}</h2>
-                    <button onClick={() => setSynopsisBook(null)} className="text-[#b0aea5] hover:text-[#141413] text-xl ml-2 shrink-0">&times;</button>
+                    <h2 className="text-lg font-bold text-[var(--text-primary)] leading-tight" style={{fontFamily: 'var(--font-heading)'}}>{synopsisBook.title}</h2>
+                    <button onClick={() => setSynopsisBook(null)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] text-xl ml-2 shrink-0">&times;</button>
                   </div>
-                  <p className="text-sm text-[#b0aea5] mt-1">{synopsisBook.author || 'Unknown author'}</p>
-                  <div className="flex flex-wrap gap-3 mt-3 text-xs text-[#b0aea5]">
+                  <p className="text-sm text-[var(--text-muted)] mt-1">{synopsisBook.author || 'Unknown author'}</p>
+                  <div className="flex flex-wrap gap-3 mt-3 text-xs text-[var(--text-muted)]">
                     {synopsisBook.num_pages && <span>{synopsisBook.num_pages} pages</span>}
                     {synopsisBook.original_year && <span>Published {synopsisBook.original_year}</span>}
                     {synopsisBook.date_read && <span>Read {synopsisBook.date_read}</span>}
@@ -620,12 +619,12 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-              <div className="mt-5 pt-5 border-t border-[#e8e6dc]">
-                <h3 className="text-xs font-semibold text-[#b0aea5] uppercase tracking-wider mb-2" style={{fontFamily: 'var(--font-heading)'}}>Synopsis</h3>
+              <div className="mt-5 pt-5 border-t border-[var(--border)]">
+                <h3 className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wider mb-2" style={{fontFamily: 'var(--font-heading)'}}>Synopsis</h3>
                 {synopsisLoading ? (
-                  <p className="text-sm text-[#b0aea5] italic">Loading synopsis from Open Library...</p>
+                  <p className="text-sm text-[var(--text-muted)] italic">Loading synopsis from Open Library...</p>
                 ) : (
-                  <p className="text-sm text-[#141413] leading-relaxed whitespace-pre-line">{synopsisText}</p>
+                  <p className="text-sm text-[var(--text-primary)] leading-relaxed whitespace-pre-line">{synopsisText}</p>
                 )}
               </div>
             </div>

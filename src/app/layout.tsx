@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Poppins, Lora } from "next/font/google";
+import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 
-const poppins = Poppins({
-  weight: ["400", "500", "600", "700"],
+const playfair = Playfair_Display({
+  weight: ["400", "500", "600", "700", "800"],
   variable: "--font-heading",
   subsets: ["latin"],
 });
 
-const lora = Lora({
-  weight: ["400", "500", "600", "700"],
+const inter = Inter({
+  weight: ["300", "400", "500", "600", "700"],
   variable: "--font-body",
   subsets: ["latin"],
 });
@@ -23,7 +23,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${poppins.variable} ${lora.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${playfair.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {

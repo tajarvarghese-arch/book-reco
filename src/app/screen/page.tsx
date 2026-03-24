@@ -88,12 +88,12 @@ export default function ScreenPage() {
   const pageAllSelected = books.length > 0 && books.every((b) => selected.has(b.id));
 
   return (
-    <div className="min-h-screen bg-[#faf9f5]">
-      <header className="bg-white border-b border-[#e8e6dc] sticky top-0 z-10">
+    <div className="min-h-screen bg-[var(--bg-page)]">
+      <header className="bg-[var(--bg-card)] border-b border-[var(--border)] sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[#d97757]" style={{fontFamily: 'var(--font-heading)'}}>Remove Books</h1>
-            <p className="text-sm text-[#b0aea5]">
+            <h1 className="text-2xl font-bold text-[var(--accent-warm)]" style={{fontFamily: 'var(--font-heading)'}}>Remove Books</h1>
+            <p className="text-sm text-[var(--text-muted)]">
               {selected.size > 0
                 ? `${selected.size} selected for removal`
                 : `${total} books shown`}
@@ -103,12 +103,12 @@ export default function ScreenPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <a href="/" className="brand-btn px-4 py-2 bg-white border border-[#e8e6dc] text-[#141413] text-sm">Dashboard</a>
+            <a href="/" className="brand-btn px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-primary)] text-sm">Dashboard</a>
             <a href="/recommendations" className="brand-btn px-4 py-2 bg-[#788c5d] text-white text-sm">Recommendations</a>
             {selected.size > 0 && (
               <button
                 onClick={handleRemove}
-                className="brand-btn px-4 py-2 bg-[#d97757] text-white text-sm"
+                className="brand-btn px-4 py-2 bg-[#2d4a3e] text-white text-sm"
               >
                 Remove {selected.size} Books
               </button>
@@ -150,7 +150,7 @@ export default function ScreenPage() {
           </select>
           <button
             onClick={() => setOrder(order === 'DESC' ? 'ASC' : 'DESC')}
-            className="brand-btn px-3 py-2 bg-white border border-[#e8e6dc] text-[#b0aea5] text-sm"
+            className="brand-btn px-3 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] text-sm"
           >
             {order === 'DESC' ? '\u2193 Desc' : '\u2191 Asc'}
           </button>
@@ -159,7 +159,7 @@ export default function ScreenPage() {
         {/* Book Table */}
         <div className="brand-card overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-[#faf9f5] border-b border-[#e8e6dc]">
+            <thead className="bg-[var(--bg-page)] border-b border-[var(--border)]">
               <tr>
                 <th className="px-4 py-3 w-10">
                   <input
@@ -170,19 +170,19 @@ export default function ScreenPage() {
                     title="Select all on this page"
                   />
                 </th>
-                <th className="text-left px-4 py-3 text-xs text-[#b0aea5] uppercase tracking-wider" style={{fontFamily: 'var(--font-heading)'}}>Title</th>
-                <th className="text-left px-4 py-3 text-xs text-[#b0aea5] uppercase tracking-wider" style={{fontFamily: 'var(--font-heading)'}}>Author</th>
-                <th className="text-center px-4 py-3 text-xs text-[#b0aea5] uppercase tracking-wider" style={{fontFamily: 'var(--font-heading)'}}>Pages</th>
-                <th className="text-left px-4 py-3 text-xs text-[#b0aea5] uppercase tracking-wider" style={{fontFamily: 'var(--font-heading)'}}>Shelf</th>
-                <th className="text-left px-4 py-3 text-xs text-[#b0aea5] uppercase tracking-wider" style={{fontFamily: 'var(--font-heading)'}}>Source</th>
+                <th className="text-left px-4 py-3 text-xs text-[var(--text-muted)] uppercase tracking-wider" style={{fontFamily: 'var(--font-heading)'}}>Title</th>
+                <th className="text-left px-4 py-3 text-xs text-[var(--text-muted)] uppercase tracking-wider" style={{fontFamily: 'var(--font-heading)'}}>Author</th>
+                <th className="text-center px-4 py-3 text-xs text-[var(--text-muted)] uppercase tracking-wider" style={{fontFamily: 'var(--font-heading)'}}>Pages</th>
+                <th className="text-left px-4 py-3 text-xs text-[var(--text-muted)] uppercase tracking-wider" style={{fontFamily: 'var(--font-heading)'}}>Shelf</th>
+                <th className="text-left px-4 py-3 text-xs text-[var(--text-muted)] uppercase tracking-wider" style={{fontFamily: 'var(--font-heading)'}}>Source</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e8e6dc]">
               {books.map((book) => (
                 <tr
                   key={book.id}
-                  className={`hover:bg-[#faf9f5] transition cursor-pointer ${
-                    selected.has(book.id) ? 'bg-[#d97757]/5' : 'bg-white'
+                  className={`hover:bg-[var(--bg-page)] transition cursor-pointer ${
+                    selected.has(book.id) ? 'bg-[#2d4a3e]/5' : 'bg-[var(--bg-card)]'
                   }`}
                   onClick={() => toggleOne(book.id)}
                 >
@@ -195,25 +195,25 @@ export default function ScreenPage() {
                       className="w-4 h-4 accent-[#d97757]"
                     />
                   </td>
-                  <td className="px-4 py-3 font-bold text-[#141413] max-w-xs truncate">
+                  <td className="px-4 py-3 font-bold text-[var(--text-primary)] max-w-xs truncate">
                     {book.title}
                   </td>
-                  <td className="px-4 py-3 text-[#b0aea5]">{book.author || '-'}</td>
-                  <td className="px-4 py-3 text-center text-[#b0aea5]">{book.num_pages || '-'}</td>
+                  <td className="px-4 py-3 text-[var(--text-muted)]">{book.author || '-'}</td>
+                  <td className="px-4 py-3 text-center text-[var(--text-muted)]">{book.num_pages || '-'}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded border ${
                       book.shelf === 'read'
                         ? 'bg-[#788c5d]/10 text-[#788c5d] border-[#788c5d]/20'
                         : book.shelf === 'currently-reading'
                         ? 'bg-[#6a9bcc]/10 text-[#6a9bcc] border-[#6a9bcc]/20'
-                        : 'bg-[#e8e6dc] text-[#b0aea5] border-[#e8e6dc]'
+                        : 'bg-[var(--border)] text-[var(--text-muted)] border-[var(--border)]'
                     }`}>
                       {book.shelf}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded border ${
-                      book.source === 'goodreads' ? 'bg-[#d97757]/10 text-[#d97757] border-[#d97757]/20' : 'bg-[#6a9bcc]/10 text-[#6a9bcc] border-[#6a9bcc]/20'
+                      book.source === 'goodreads' ? 'bg-[#2d4a3e]/10 text-[var(--accent-warm)] border-[#d97757]/20' : 'bg-[#6a9bcc]/10 text-[#6a9bcc] border-[#6a9bcc]/20'
                     }`}>
                       {book.source}
                     </span>
@@ -230,22 +230,22 @@ export default function ScreenPage() {
 
       {/* Sticky Pagination */}
       {totalPages > 1 && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#e8e6dc] z-10 shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-[var(--bg-card)] border-t border-[var(--border)] z-10 shadow-lg">
           <div className="max-w-5xl mx-auto px-6 py-3 flex items-center justify-center gap-3">
             <button
               onClick={() => { setPage(Math.max(0, page - 1)); window.scrollTo(0, 0); }}
               disabled={page === 0}
-              className="brand-btn px-5 py-2.5 bg-white border border-[#e8e6dc] text-[#b0aea5] text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+              className="brand-btn px-5 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] text-sm disabled:opacity-30 disabled:cursor-not-allowed"
             >
               &larr; Previous
             </button>
-            <span className="text-sm font-bold text-[#141413] px-3">
+            <span className="text-sm font-bold text-[var(--text-primary)] px-3">
               Page {page + 1} of {totalPages}
             </span>
             <button
               onClick={() => { setPage(Math.min(totalPages - 1, page + 1)); window.scrollTo(0, 0); }}
               disabled={page >= totalPages - 1}
-              className="brand-btn px-5 py-2.5 bg-white border border-[#e8e6dc] text-[#b0aea5] text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+              className="brand-btn px-5 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-muted)] text-sm disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Next &rarr;
             </button>

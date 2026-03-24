@@ -20,7 +20,7 @@ type Genre = {
   books: Recommendation[];
 };
 
-const genreColors = ['bg-[#d97757]', 'bg-[#6a9bcc]', 'bg-[#788c5d]', 'bg-[#d97757]', 'bg-[#6a9bcc]', 'bg-[#788c5d]', 'bg-[#d97757]'];
+const genreColors = ['bg-[#8b3a3a]', 'bg-[#2d4a3e]', 'bg-[#5e6b4f]', 'bg-[#8b3a3a]', 'bg-[#2d4a3e]', 'bg-[#5e6b4f]', 'bg-[#8b3a3a]'];
 
 const genres: Genre[] = [
   {
@@ -381,9 +381,9 @@ const iconMap: Record<string, string> = {
 
 function Tooltip({ text }: { text: string }) {
   return (
-    <div className="absolute z-50 bottom-full left-0 right-0 mb-2 p-4 bg-white border border-[#e8e6dc] rounded-xl shadow-lg text-[#141413] text-sm leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none max-w-lg">
+    <div className="absolute z-50 bottom-full left-0 right-0 mb-2 p-4 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl shadow-lg text-[var(--text-primary)] text-sm leading-relaxed opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none max-w-lg">
       {text}
-      <div className="absolute top-full left-8 w-3 h-3 bg-white border-b border-r border-[#e8e6dc] transform rotate-45 -translate-y-1.5" />
+      <div className="absolute top-full left-8 w-3 h-3 bg-[var(--bg-card)] border-b border-r border-[var(--border)] transform rotate-45 -translate-y-1.5" />
     </div>
   );
 }
@@ -392,32 +392,32 @@ export default function RecommendationsPage() {
   const [expandedGenre, setExpandedGenre] = useState<string | null>(genres[0].name);
 
   return (
-    <div className="min-h-screen bg-[#faf9f5]">
-      <header className="bg-white border-b border-[#e8e6dc]">
+    <div className="min-h-screen bg-[var(--bg-page)]">
+      <header className="bg-[var(--bg-card)] border-b border-[var(--border)]">
         <div className="max-w-5xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-[#141413]" style={{fontFamily: 'var(--font-heading)'}}>Your Reading DNA</h1>
-              <p className="text-sm text-[#b0aea5] mt-1">Analysis of 160+ rated books &middot; Personalized recommendations</p>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]" style={{fontFamily: 'var(--font-heading)'}}>Your Reading DNA</h1>
+              <p className="text-sm text-[var(--text-muted)] mt-1">Analysis of 160+ rated books &middot; Personalized recommendations</p>
             </div>
             <div className="flex gap-2">
-              <a href="/" className="brand-btn px-4 py-2 bg-white border border-[#e8e6dc] text-[#141413] text-sm">Dashboard</a>
-              <a href="/screen" className="brand-btn px-4 py-2 bg-white border border-[#e8e6dc] text-[#141413] text-sm">Edit Library</a>
+              <a href="/" className="brand-btn px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-primary)] text-sm">Dashboard</a>
+              <a href="/screen" className="brand-btn px-4 py-2 bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-primary)] text-sm">Edit Library</a>
             </div>
           </div>
 
           <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="brand-card p-5">
-              <p className="text-xs text-[#788c5d] uppercase tracking-wide" style={{fontFamily: 'var(--font-heading)'}}>Your Identity</p>
-              <p className="text-sm text-[#141413] mt-2">You&apos;re a <strong className="text-[#d97757]">hard sci-fi loyalist</strong> who also devours narrative non-fiction about extreme human endurance. You finish 800+ page novels and rate demanding literary fiction highly.</p>
+              <p className="text-xs text-[var(--accent-olive)] uppercase tracking-wide" style={{fontFamily: 'var(--font-heading)'}}>Your Identity</p>
+              <p className="text-sm text-[var(--text-primary)] mt-2">You&apos;re a <strong className="text-[var(--accent-warm)]">hard sci-fi loyalist</strong> who also devours narrative non-fiction about extreme human endurance. You finish 800+ page novels and rate demanding literary fiction highly.</p>
             </div>
             <div className="brand-card p-5">
-              <p className="text-xs text-[#d97757] uppercase tracking-wide" style={{fontFamily: 'var(--font-heading)'}}>Your Sweet Spot</p>
-              <p className="text-sm text-[#141413] mt-2">Books that combine <strong className="text-[#d97757]">intellectual rigor with propulsive narrative</strong>. You rate &ldquo;smart page-turners&rdquo; highest--whether that&apos;s Three-Body Problem, Devil in the White City, or le Carre. You punish bloat (1Q84: 2 stars).</p>
+              <p className="text-xs text-[var(--accent-warm)] uppercase tracking-wide" style={{fontFamily: 'var(--font-heading)'}}>Your Sweet Spot</p>
+              <p className="text-sm text-[var(--text-primary)] mt-2">Books that combine <strong className="text-[var(--accent-warm)]">intellectual rigor with propulsive narrative</strong>. You rate &ldquo;smart page-turners&rdquo; highest--whether that&apos;s Three-Body Problem, Devil in the White City, or le Carre. You punish bloat (1Q84: 2 stars).</p>
             </div>
             <div className="brand-card p-5">
-              <p className="text-xs text-[#6a9bcc] uppercase tracking-wide" style={{fontFamily: 'var(--font-heading)'}}>Blind Spot</p>
-              <p className="text-sm text-[#141413] mt-2">Almost <strong className="text-[#d97757]">no translated fiction</strong> beyond Murakami and Liu Cixin, and limited contemporary literary fiction post-2020. Your biggest growth opportunity is international literature and modern prize-winners.</p>
+              <p className="text-xs text-[var(--accent)] uppercase tracking-wide" style={{fontFamily: 'var(--font-heading)'}}>Blind Spot</p>
+              <p className="text-sm text-[var(--text-primary)] mt-2">Almost <strong className="text-[var(--accent-warm)]">no translated fiction</strong> beyond Murakami and Liu Cixin, and limited contemporary literary fiction post-2020. Your biggest growth opportunity is international literature and modern prize-winners.</p>
             </div>
           </div>
         </div>
@@ -430,20 +430,20 @@ export default function RecommendationsPage() {
             <div key={genre.name} className="brand-card overflow-hidden">
               <button
                 onClick={() => setExpandedGenre(isExpanded ? null : genre.name)}
-                className="w-full px-6 py-5 flex items-center gap-4 hover:bg-[#faf9f5] transition text-left"
+                className="w-full px-6 py-5 flex items-center gap-4 hover:bg-[var(--bg-page)] transition text-left"
               >
                 <span className="text-3xl">{iconMap[genre.icon] || genre.icon}</span>
                 <div className="flex-1">
-                  <h2 className="text-base font-semibold text-[#141413]" style={{fontFamily: 'var(--font-heading)'}}>{genre.name}</h2>
-                  <p className="text-sm text-[#b0aea5] mt-1">{genre.books.length} recommendations</p>
+                  <h2 className="text-base font-semibold text-[var(--text-primary)]" style={{fontFamily: 'var(--font-heading)'}}>{genre.name}</h2>
+                  <p className="text-sm text-[var(--text-muted)] mt-1">{genre.books.length} recommendations</p>
                 </div>
-                <span className={`text-[#b0aea5] transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                <span className={`text-[var(--text-muted)] transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
                   &#9660;
                 </span>
               </button>
 
               {isExpanded && (
-                <div className="border-t border-[#e8e6dc]">
+                <div className="border-t border-[var(--border)]">
                   <div className={`mx-6 mt-4 mb-6 p-4 ${genre.color} rounded-lg`}>
                     <p className="text-xs uppercase tracking-wide text-white opacity-80 mb-1" style={{fontFamily: 'var(--font-heading)'}}>Why This Genre Fits You</p>
                     <p className="text-sm leading-relaxed text-white opacity-95">{genre.analysis}</p>
@@ -451,22 +451,22 @@ export default function RecommendationsPage() {
 
                   <div className="px-6 pb-6 space-y-4">
                     {genre.books.map((book, i) => (
-                      <div key={i} className="group relative border border-[#e8e6dc] bg-white rounded-lg p-4 hover:border-[#b0aea5] hover:shadow-sm transition">
+                      <div key={i} className="group relative border border-[var(--border)] bg-[var(--bg-card)] rounded-lg p-4 hover:border-[var(--border-hover)] hover:shadow-sm transition">
                         <Tooltip text={book.synopsis} />
                         <div className="flex gap-4">
-                          <img src={book.coverUrl} alt={book.title} className="w-16 h-24 rounded-md object-cover shrink-0 shadow-sm bg-[#e8e6dc]" />
+                          <img src={book.coverUrl} alt={book.title} className="w-16 h-24 rounded-md object-cover shrink-0 shadow-sm bg-[var(--border)]" />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between">
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-bold text-[#141413]">{book.title}</h3>
-                                <p className="text-sm text-[#b0aea5]">{book.author} &middot; {book.year} &middot; {book.pages} pages</p>
+                                <h3 className="font-bold text-[var(--text-primary)]">{book.title}</h3>
+                                <p className="text-sm text-[var(--text-muted)]">{book.author} &middot; {book.year} &middot; {book.pages} pages</p>
                               </div>
-                              <span className="text-xs text-[#b0aea5] bg-[#faf9f5] px-2 py-1 border border-[#e8e6dc] rounded shrink-0 ml-3">
+                              <span className="text-xs text-[var(--text-muted)] bg-[var(--bg-page)] px-2 py-1 border border-[var(--border)] rounded shrink-0 ml-3">
                                 hover for synopsis
                               </span>
                             </div>
-                            <p className="text-sm text-[#141413] mt-3 leading-relaxed opacity-80">
-                              <span className="font-bold text-[#d97757]">Why you&apos;ll love it: </span>
+                            <p className="text-sm text-[var(--text-primary)] mt-3 leading-relaxed opacity-80">
+                              <span className="font-bold text-[var(--accent-warm)]">Why you&apos;ll love it: </span>
                               {book.reason}
                             </p>
                           </div>
